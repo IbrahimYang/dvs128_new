@@ -1,5 +1,7 @@
 # dvs128_new
 
+Ibrahim Yang, CBICR, Tsinghua University
+
 this is a project get picture from dvs128 based on libcaer
 
 to build this project please use following:
