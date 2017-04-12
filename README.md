@@ -2,12 +2,12 @@
 
 Ibrahim Yang, CBICR, Tsinghua University
 
-this is a project get picture from dvs128 based on libcaer
+this is a c++ project get video from dvs128 based on libcaer
 
 to build this project please use following:
 
-# within opencv
+## build(within opencv)
 g++ -std=c++11 -pedantic -Wall -Wextra -O2 -o dvs128_simple main.cpp dvs128_class.cpp -D_DEFAULT_SOURCE=1 `pkg-config --cflags --libs opencv` -lcaer
 
-# without opencv
+# build(without opencv)
 g++ -std=c++11 -pedantic -Wall -Wextra -O2 -o dvs128_simple main.cpp dvs128_class.cpp -D_DEFAULT_SOURCE=1 -lcaer
