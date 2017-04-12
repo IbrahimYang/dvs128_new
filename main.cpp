@@ -22,8 +22,8 @@ Others:       none
 *************************************************/
 int main()
 {
-	DVSCameraWorker myDVSCameraWorker;
-	myDVSCameraWorker.run();
+	DVS128_Processer myDVSCameraWorker;
+	myDVSCameraWorker.dvs128_run();
 	
 	return(0);
 }

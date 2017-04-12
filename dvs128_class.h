@@ -18,6 +18,8 @@ History:      inilabs->libcaer VLOGroup->dvs-reconstruction libusb-1.0
 
 using namespace std;
 
+//#define time_window ./
+
 /*************************************************
 Struct:       Event
 Description:  the struct save the event data for dvs128
@@ -46,20 +48,21 @@ Output:       none
 Return:       none
 Others:       none
 *************************************************/
-class DVSCameraWorker
+class DVS128_Processer
 {
 public:
-   DVSCameraWorker() = default;
-   void run();
-   void run_simple();
-   void stop(void);
+   DVS128_Processer() = default;
+   void dvs128_run();
+   void dvs128_run_single();
+   void dvs128_stop(void);
 
 protected:
-   bool init(void);
-   void deinit(void);
+   bool dvs128_init(void);
+   void dvs128_deinit(void);
    std::vector<Event> events_buffer;
    caerDeviceHandle dvs128_handle;
    bool running_ = true;
+   double current_time = 0;
 };
 
 #endif
