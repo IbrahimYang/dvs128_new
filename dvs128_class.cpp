@@ -1,23 +1,38 @@
-/*
- * dvs128_class.cpp
- *
- *  Created on: 2017-4-10
- *      Author: root
- */
-
+/*****************************************************************************
+*******************Ibrahim,CBICR,Tsinghua University**************************
+******************************************************************************
+File name:    dvs128_class.cpp
+Description:  define the functions in dvs128_class.h
+Author:       Ibrahim Yang
+Version:      V1.0
+Date:         2017-4-12
+History:      inilabs->libcaer VLOGroup->dvs-reconstruction libusb-1.0
+*****************************************************************************/
 #include "dvs128_class.h"
 
+/*************************************************
+Function:     void DVSCameraWorker::run()
+Description:  the is the run function to get dvs image
+Calls:        DVSCameraWorker::init() DVSCameraWorker::deinit() DVSCameraWorker::stop(void)
+Called By:    int main()
+Input:        none
+Output:       event_buf
+Return:       none
+Others:       none
+*************************************************/
 void DVSCameraWorker::run()
 {
+   int32_t count=0;
    if(init()) {
-       for(;;)
+       while(running_)
        {
            // get event and update timestamps
            caerEventPacketContainer packetContainer = caerDeviceDataGet(dvs128_handle);
            if (packetContainer == NULL) {
                continue; // Skip if nothing there.
            }
-           events_buffer.clear();
+           /*this line is important*/
+           //events_buffer.clear();
            int32_t packetNum = caerEventPacketContainerGetEventPacketsNumber(packetContainer);
            for (int32_t i = 0; i < packetNum; i++) {
                caerEventPacketHeader packetHeader = caerEventPacketContainerGetEventPacket(packetContainer, i);
@@ -35,19 +50,108 @@ void DVSCameraWorker::run()
                        event.t = caerPolarityEventGetTimestamp(caerPolarityIteratorElement)*1e-6;
                        event.x = caerPolarityEventGetX(caerPolarityIteratorElement); // don't know why it is other way round?
                        event.y = caerPolarityEventGetY(caerPolarityIteratorElement);
-                       event.polarity = caerPolarityEventGetPolarity(caerPolarityIteratorElement)?1.0f:-1.0f;
-   //                    if(undistortPoint(event,params.K_cam,params.radial))
-                       printf("event - t: %f, x: %d, y: %d.\n", event.t, event.x, event.y);
+                       event.polarity = caerPolarityEventGetPolarity(caerPolarityIteratorElement);//?1.0f:-1.0f;
+                       //if(undistortPoint(event,params.K_cam,params.radial))
+                       //printf("event - t: %f, x: %d, y: %d.\n", event.t, event.x, event.y);
                        events_buffer.push_back(event);
+                       count++;
+
+                       if (event.t > 0.5)
+                       {
+                         stop();
+                       }
                    }
                }
            }
            caerEventPacketContainerFree(packetContainer);
        }
        deinit();
+       auto begin_=events_buffer.begin(),
+            end_  =events_buffer.end();
+       while(begin_ != end_) 
+       {
+            ++begin_;
+            printf("event - t: %f, x: %d, y: %d.\n", begin_->t, begin_->x, begin_->y);
+       }
+       printf("the size of events_buf size=%d\n", (int32_t)(events_buffer.size()));
+       printf("the size of events_buf capacity=%d\n", (int32_t)(events_buffer.capacity()));
+       events_buffer.clear();
    }
 }
 
+/*************************************************
+Function:     void DVSCameraWorker::run()
+Description:  the is the run function to get dvs image
+Calls:        DVSCameraWorker::init() DVSCameraWorker::deinit() DVSCameraWorker::stop(void)
+Called By:    int main()
+Input:        none
+Output:       event_buf
+Return:       none
+Others:       none
+*************************************************/
+// void DVSCameraWorker::run_simple()
+// {
+//    if(init()) {
+//            caerEventPacketContainer packetContainer = caerDeviceDataGet(dvs128_handle);
+//            if (packetContainer == NULL) {
+//                continue; // Skip if nothing there.
+//            }
+//            events_buffer.clear();
+//            int32_t packetNum = caerEventPacketContainerGetEventPacketsNumber(packetContainer);
+//            for (int32_t i = 0; i < packetNum; i++) {
+//                caerEventPacketHeader packetHeader = caerEventPacketContainerGetEventPacket(packetContainer, i);
+//                if (packetHeader == NULL) {
+//                    continue; // Skip if nothing there.
+//                }
+//                // Packet 0 is always the special events packet for DVS128, while packet is the polarity events packet.
+//                if (i == POLARITY_EVENT) {
+
+//                    caerPolarityEventPacket polarity = (caerPolarityEventPacket) packetHeader;
+//                    for (int32_t caerPolarityIteratorCounter = 0; caerPolarityIteratorCounter < caerEventPacketHeaderGetEventNumber(&(polarity)->packetHeader);caerPolarityIteratorCounter++) {
+//                        caerPolarityEvent caerPolarityIteratorElement = caerPolarityEventPacketGetEvent(polarity, caerPolarityIteratorCounter);
+//                        if (!caerPolarityEventIsValid(caerPolarityIteratorElement)) { continue; }
+//                        Event event;
+//                        event.t = caerPolarityEventGetTimestamp(caerPolarityIteratorElement)*1e-6;
+//                        event.x = caerPolarityEventGetX(caerPolarityIteratorElement); // don't know why it is other way round?
+//                        event.y = caerPolarityEventGetY(caerPolarityIteratorElement);
+//                        event.polarity = caerPolarityEventGetPolarity(caerPolarityIteratorElement);//?1.0f:-1.0f;
+//                        //if(undistortPoint(event,params.K_cam,params.radial))
+//                        //printf("event - t: %f, x: %d, y: %d.\n", event.t, event.x, event.y);
+//                        events_buffer.push_back(event);
+//                        count++;
+
+//                        if (event.t > 1)
+//                        {
+//                          stop();
+//                        }
+//                    }
+//                }
+//            }
+//            caerEventPacketContainerFree(packetContainer);
+//        deinit();
+//        auto begin_=events_buffer.begin(),
+//             end_  =events_buffer.end();
+//        while(begin_ != end_) 
+//        {
+//             ++begin_;
+//             printf("event - t: %f, x: %d, y: %d.\n", begin_->t, begin_->x, begin_->y);
+//        }
+//        printf("the size of event buf=%d\n", (int32_t)(events_buffer.size()));
+//        printf("the size of event cap=%d\n", (int32_t)(events_buffer.capacity()));
+//        events_buffer.clear();
+//    }
+// }
+
+/*************************************************
+Function:     bool DVSCameraWorker::init()
+Description:  dvs128 init fuction
+Calls:        none
+Called By:    void DVSCameraWorker::run()
+Input:        none
+Output:       dvs128_handle
+Return:       bool does dvs init right?
+Others:       none
+*************************************************/
 bool DVSCameraWorker::init()
 {
    // init camera
@@ -97,10 +201,35 @@ bool DVSCameraWorker::init()
    return true;
 }
 
-
+/*************************************************
+Function:     void DVSCameraWorker::deinit()
+Description:  dvs128 deinit fuction
+Calls:        none
+Called By:    void DVSCameraWorker::run()
+Input:        none
+Output:       none
+Return:       none
+Others:       none
+*************************************************/
 void DVSCameraWorker::deinit()
 {
    caerDeviceDataStop(dvs128_handle);
 
    caerDeviceClose(&dvs128_handle);
+}
+
+/*************************************************
+Function:     bool DVSCameraWorker::init()
+Description:  run stop fuction
+Calls:        none
+Called By:    void DVSCameraWorker::run()
+Input:        none
+Output:       running_
+Return:       none
+Others:       none
+*************************************************/
+void DVSCameraWorker::stop(void)
+{
+  running_=false;
+  printf("DVS128 stop\n");
 }
